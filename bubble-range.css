@@ -1,0 +1,17 @@
+.bubble-range {
+    position: relative;
+    border-radius: 50%;
+    opacity: 0.9;
+    box-sizing: border-box;
+}
+
+.bubble-range__control {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 5px;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 50%;
+    opacity: 0.9;
+}

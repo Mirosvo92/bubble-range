@@ -4,7 +4,7 @@ var BubbleRange = function() {
     function BubbleRange(dataRange) {
         this.dataRange = dataRange;
         initValidateBubble(this.dataRange, validateBubble);
-        initValidateBubble(this.dataRange, validateBubble);
+        this.size = this.dataRange.size.split('px')[0];
         this.init();
     }
 
@@ -23,16 +23,61 @@ var BubbleRange = function() {
         var bubbleRange = document.querySelector('.bubble-range');
         var bobbleRangeControl = document.createElement('div');
         bobbleRangeControl.classList.add('bubble-range__control');
-        bobbleRangeControl.style.width = setSizeControl(this.dataRange.size) + 'px';
-        bobbleRangeControl.style.height = setSizeControl(this.dataRange.size)+ 'px';
+        bobbleRangeControl.style.width = setSizeControl(this.size) + 'px';
+        bobbleRangeControl.style.height = setSizeControl(this.size)+ 'px';
         bobbleRangeControl.style.backgroundColor = this.dataRange.backgroundColorControl;
         bubbleRange.appendChild(bobbleRangeControl);
+        this.addEvents(bobbleRangeControl);
+    };
+
+    BubbleRange.prototype.addEvents = function (element) {
+        var heightElement = element.clientHeight;
+        var maxHeightElement = this.dataRange.size;
+        var startPoint = 0;
+        var isDown = false;
+        var self = this;
+
+        function mouseDown() {
+            isDown = true;
+        }
+        function mouseUpLeave() {
+            isDown = false;
+        }
+        function mouseMove(event) {
+            if (isDown) {
+                console.log('startPoint', startPoint);
+                if (!startPoint) {
+                    startPoint = event.clientY;
+                }
+                if (startPoint >= event.clientY) {
+                    var currentHeight = startPoint - event.clientY;
+                    if (validteHeight.call(self, (heightElement + currentHeight))) {
+                        element.style.width = heightElement + currentHeight + 'px';
+                        element.style.height = heightElement + currentHeight + 'px';
+                    }
+                }
+            }
+        }
+        function validteHeight(height) {
+            console.log('height', height);
+            console.log('this.size', this.size);
+            if (height <= this.size - 10) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        element.addEventListener('mousedown', mouseDown);
+        element.addEventListener('mouseup', mouseUpLeave);
+        element.addEventListener('mousemove', mouseMove);
+        element.addEventListener('mouseleave', mouseUpLeave);
     };
 
     var validateBubble = {
         size: function (data) {
             if ( !data.size || data.size < 150) {
-                data.size = '150px';
+                data.size = '300px';
             }
         },
         backgroundColor: function (data) {
@@ -58,6 +103,10 @@ var BubbleRange = function() {
     function setSizeControl (size) {
         var size = size.split('px')[0];
         return size * 20 / 100;
+    }
+
+    function addClassElement() {
+
     }
 
     

@@ -1,7 +1,6 @@
 .bubble-range {
     position: relative;
     border-radius: 50%;
-    opacity: 0.9;
     box-sizing: border-box;
 }
 

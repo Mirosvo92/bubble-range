@@ -1,22 +1,15 @@
-"use strict";
 var BubbleRange = function() {
+    "use strict";
 
     function BubbleRange(dataRange) {
-        var self = this;
         this.dataRange = dataRange;
         initValidateBubble(this.dataRange, validateBubble);
         this.size = this.dataRange.size.split('px')[0];
-        this.bubble = undefined;
         this.init();
-        var dataRange = {
-            backgroundColorControl: this.dataRange.backgroundColorControl,
-            parent: self.bubble,
-            size: self.size,
-            indent: self.dataRange.indent,
-            opacity: self.dataRange.opacity
-        };
+        dataRange.parent = this.bubble;
+        dataRange.size = this.size;
         // create range
-        var range = new Range(dataRange);
+        return new Range(dataRange);
     }
 
     BubbleRange.prototype.init = function () {
@@ -25,16 +18,16 @@ var BubbleRange = function() {
         this.bubble.classList.add('bubble-range');
         this.bubble.style.width = this.dataRange.size;
         this.bubble.style.height = this.dataRange.size;
-        this.bubble.style.backgroundColor = this.dataRange.backgroundColor;
+        this.bubble.style.backgroundColor = this.dataRange.backgroundColorBubble;
         this.bubble.style.opacity = this.dataRange.opacity;
         container.appendChild(this.bubble);
     };
 
-     function Range(data) {
+    function Range(data) {
          this.data = data;
-         this.bobbleRangeControl;
+         this.value = 0;
          this.init();
-     }
+    }
 
     Range.prototype.init = function () {
         this.bobbleRangeControl = document.createElement('div');
@@ -43,25 +36,57 @@ var BubbleRange = function() {
         this.bobbleRangeControl.style.height = setSizeControl(this.data.size)+ 'px';
         this.bobbleRangeControl.style.backgroundColor = this.data.backgroundColorControl;
         this.data.parent.appendChild(this.bobbleRangeControl);
+        if (this.data.icon) {
+            this.addIcon();
+        }
         this.addEvents();
-        this.addEventsMobile();
+        if (this.data.description) {
+            this.addDescription();
+        }
+        if (this.data.wrapperValue) {
+            this.showValue(0);
+        }
+    };
+
+    Range.prototype.addIcon = function () {
+        this.icon = document.createElement('div');
+        this.icon.classList.add('icon');
+        this.bobbleRangeControl.appendChild(this.icon);
+    };
+
+    Range.prototype.changeIconSize = function (current) {
+        var dataScale = 1 + (current * 0.2 / 100);
+        this.icon.style.transform = 'scale(' +  dataScale + ')';
+    };
+
+    Range.prototype.addDescription = function () {
+        var description = document.createElement('div');
+        description.classList.add('bubble-range__description');
+        description.innerHTML = this.data.description;
+        this.bobbleRangeControl.appendChild(description);
+
     };
 
     Range.prototype.addEvents = function () {
-        var heightElement = setSizeControl(this.data.size);
-        var startPoint = 0;
-        var isDown = false;
-        var self = this;
-        var differentOpacity = 1 - this.data.opacity;
+        var heightElement = setSizeControl(this.data.size),
+            startPoint = 0,
+            isDown = false,
+            self = this,
+            differentOpacity = 1 - this.data.opacity;
 
-        function mouseDown() {
-            addClassElement(self.bobbleRangeControl, 'bubble-range__control--active');
-            isDown = true;
+        function mouseDown(event) {
+            console.log('event', event.target);
+            if (event.target === self.bobbleRangeControl) {
+                addClassElement(self.bobbleRangeControl, 'bubble-range__control--active');
+                isDown = true;
+            }
         }
+
         function mouseUpLeave() {
             deleteClassElement(self.bobbleRangeControl, 'bubble-range__control--active');
             isDown = false;
         }
+
         function mouseMove(event) {
             if (isDown) {
                 if (!startPoint) {
@@ -70,14 +95,33 @@ var BubbleRange = function() {
                 if (startPoint >= event.clientY) {
                     var currentHeight = startPoint - event.clientY + heightElement;
                     if (validateHeight(currentHeight, self.data.size, self.data.indent)) {
-                        self.bobbleRangeControl.style.width = currentHeight + 'px';
-                        self.bobbleRangeControl.style.height = currentHeight + 'px';
-                        self.changeOpacity(self.showRangeValue(Number(currentHeight)), differentOpacity);
-                        self.showRangeValue(currentHeight);
-                        BubbleRange.test = self.showRangeValue(currentHeight);
-                        // console.log('showRangeValue', self.showRangeValue(Number(currentHeight)));
+                        setProperties.call(self, currentHeight, differentOpacity);
                     }
                 }
+            }
+        }
+
+        function touchMove(event) {
+            if (!startPoint) {
+                startPoint = event.targetTouches[0].pageY;
+            }
+            if (startPoint >= event.targetTouches[0].pageY) {
+                var currentHeight = startPoint - event.targetTouches[0].pageY + heightElement;
+                if (validateHeight(currentHeight, self.data.size, self.data.indent)) {
+                    setProperties.call(self, currentHeight, differentOpacity);
+                }
+            }
+        }
+
+        function setProperties(currentHeight, differentOpacity) {
+            this.bobbleRangeControl.style.width = currentHeight + 'px';
+            this.bobbleRangeControl.style.height = currentHeight + 'px';
+            this.changeIconSize(currentHeight);
+            this.changeOpacity(this.showRangeValue(Number(currentHeight)), differentOpacity);
+            this.showRangeValue(currentHeight);
+            this.value = this.showRangeValue(Number(currentHeight));
+            if (this.data.wrapperValue) {
+                this.showValue(this.showRangeValue(Number(currentHeight)));
             }
         }
 
@@ -86,31 +130,7 @@ var BubbleRange = function() {
         this.bobbleRangeControl.addEventListener('mousemove', mouseMove);
         this.data.parent.addEventListener('mousemove', mouseMove);
         this.data.parent.addEventListener('mouseleave', mouseUpLeave);
-    };
-
-    Range.prototype.addEventsMobile = function() {
-        var heightElement = setSizeControl(this.data.size);
-        var startPoint = 0;
-        var self = this;
-        var differentOpacity = 1 - this.data.opacity;
-
-        function touchMove(event) {
-            // console.log('event', event);
-            if (!startPoint) {
-                startPoint = event.targetTouches[0].pageY;
-            }
-            if (startPoint >= event.targetTouches[0].pageY) {
-                var currentHeight = startPoint - event.targetTouches[0].pageY + heightElement;
-                console.log('currentHeight', currentHeight);
-                if (validateHeight(currentHeight, self.data.size, self.data.indent)) {
-                    self.bobbleRangeControl.style.width = currentHeight + 'px';
-                    self.bobbleRangeControl.style.height = currentHeight + 'px';
-                    self.showRangeValue(currentHeight);
-                    // console.log('showRangeValue', self.showRangeValue(Number(currentHeight)));
-                }
-            }
-        }
-
+        // mobile
         this.bobbleRangeControl.addEventListener('touchmove', touchMove);
     };
 
@@ -119,22 +139,27 @@ var BubbleRange = function() {
     };
 
     Range.prototype.changeOpacity = function (currentValue, differentOpacity) {
-        console.log('currentValue', currentValue);
         var opacityValue = differentOpacity * currentValue / 100;
-        console.log('opacityValue', opacityValue);
-        this.data.parent.style.opacity = this.data.opacity + opacityValue;
+        this.data.parent.style.opacity = this.data.opacity + opacityValue + '';
+    };
+
+    Range.prototype.showValue = function (value) {
+        if (!this.wrapperValue) {
+            this.wrapperValue = document.querySelector(this.data.wrapperValue);
+        }
+        this.wrapperValue.innerHTML = Math.round(value) + '%';
     };
 
 
     var validateBubble = {
         size: function (data) {
-            if ( !data.size || data.size < 150) {
-                data.size = '300px';
+            if ( !data.size || data.size < 150 || data.size > 500) {
+                data.size = '400px';
             }
         },
         backgroundColor: function (data) {
             if ( !data.backgroundColorBubble) {
-                data.backgroundColor = '#4314FF';
+                data.backgroundColorBubble = '#4314FF';
             }
         },
         backgroundColorControl: function (data) {

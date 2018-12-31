@@ -1,21 +1,51 @@
 .bubble-range {
     position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    padding-bottom: 5px;
     border-radius: 50%;
     box-sizing: border-box;
 }
 
 .bubble-range__control {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 5px;
-    margin-left: auto;
-    margin-right: auto;
     border-radius: 50%;
     opacity: 0.9;
-    cursor: grab;
+
 }
 
 .bubble-range__control--active {
     cursor: grabbing;
+}
+
+.bubble-range__description {
+    color: white;
+    font-size: 14px;
+    position: absolute;
+    z-index: 12;
+    text-align: center;
+    top: 30%;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+    height: 10%;
+    width: 100%;
+    user-select: none;
+}
+
+.icon {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    width: 10%;
+    height: 10%;
+    border-radius: 50%;
+    opacity: 1;
+    background: url("icons/sun.svg"), no-repeat, center;
+    background-size: cover;
 }

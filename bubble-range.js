@@ -51,7 +51,7 @@ var BubbleRange = function() {
     Range.prototype.addIcon = function () {
         this.icon = document.createElement('div');
         this.icon.classList.add('icon');
-        this.bobbleRangeControl.appendChild(this.icon);
+        this.data.parent.appendChild(this.icon);
     };
 
     Range.prototype.changeIconSize = function (current) {
@@ -63,7 +63,7 @@ var BubbleRange = function() {
         var description = document.createElement('div');
         description.classList.add('bubble-range__description');
         description.innerHTML = this.data.description;
-        this.bobbleRangeControl.appendChild(description);
+        this.data.parent.appendChild(description);
 
     };
 
@@ -75,15 +75,16 @@ var BubbleRange = function() {
             differentOpacity = 1 - this.data.opacity;
 
         function mouseDown(event) {
-            console.log('event', event.target);
-            if (event.target === self.bobbleRangeControl) {
-                addClassElement(self.bobbleRangeControl, 'bubble-range__control--active');
-                isDown = true;
-            }
+           if (validateCoordinates(event.clientX, event.clientY, self.bobbleRangeControl)) {
+               addClassElement(this.bobbleRangeControl, 'bubble-range__control--active');
+               addClassElement(this.bobbleRangeControl.parentNode, 'bubble-range--active');
+               isDown = true;
+           }
         }
 
         function mouseUpLeave() {
-            deleteClassElement(self.bobbleRangeControl, 'bubble-range__control--active');
+            deleteClassElement(this.bobbleRangeControl, 'bubble-range__control--active');
+            deleteClassElement(this.bobbleRangeControl.parentNode, 'bubble-range--active');
             isDown = false;
         }
 
@@ -94,8 +95,8 @@ var BubbleRange = function() {
                 }
                 if (startPoint >= event.clientY) {
                     var currentHeight = startPoint - event.clientY + heightElement;
-                    if (validateHeight(currentHeight, self.data.size, self.data.indent)) {
-                        setProperties.call(self, currentHeight, differentOpacity);
+                    if (validateHeight(currentHeight, this.data.size, this.data.indent)) {
+                        setProperties.call(this, currentHeight, differentOpacity);
                     }
                 }
             }
@@ -107,8 +108,8 @@ var BubbleRange = function() {
             }
             if (startPoint >= event.targetTouches[0].pageY) {
                 var currentHeight = startPoint - event.targetTouches[0].pageY + heightElement;
-                if (validateHeight(currentHeight, self.data.size, self.data.indent)) {
-                    setProperties.call(self, currentHeight, differentOpacity);
+                if (validateHeight(currentHeight, this.data.size, this.data.indent)) {
+                    setProperties.call(this, currentHeight, differentOpacity);
                 }
             }
         }
@@ -125,13 +126,12 @@ var BubbleRange = function() {
             }
         }
 
-        this.bobbleRangeControl.addEventListener('mousedown', mouseDown);
-        this.bobbleRangeControl.addEventListener('mouseup', mouseUpLeave);
-        this.bobbleRangeControl.addEventListener('mousemove', mouseMove);
-        this.data.parent.addEventListener('mousemove', mouseMove);
-        this.data.parent.addEventListener('mouseleave', mouseUpLeave);
+        this.data.parent.addEventListener('mousedown', mouseDown.bind(this));
+        this.data.parent.addEventListener('mouseup', mouseUpLeave.bind(this));
+        this.data.parent.addEventListener('mousemove', mouseMove.bind(this));
+        this.data.parent.addEventListener('mouseleave', mouseUpLeave.bind(this));
         // mobile
-        this.bobbleRangeControl.addEventListener('touchmove', touchMove);
+        this.data.parent.addEventListener('touchmove', touchMove.bind(this));
     };
 
     Range.prototype.showRangeValue = function (currentSize) {
@@ -178,6 +178,13 @@ var BubbleRange = function() {
             }
         }
     };
+
+    function validateCoordinates(xData, yData, element) {
+        var currentCoordinates = element.getBoundingClientRect();
+        if (xData >= currentCoordinates.x && yData >= currentCoordinates.y) {
+            return true;
+        }
+    }
 
     function initValidateBubble(data, obj) {
         for (var prop in obj) {
